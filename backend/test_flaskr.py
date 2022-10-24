@@ -17,6 +17,7 @@ class TriviaTestCase(unittest.TestCase):
 
     def setUp(self):
         """Define test variables and initialize app."""
+
         self.app = create_app()
         self.client = self.app.test_client
         # self.database_name = "trivia_test"
@@ -46,6 +47,7 @@ class TriviaTestCase(unittest.TestCase):
 
     def tearDown(self):
         """Executed after reach test"""
+
         with self.app.app_context():
             test_quetions = Question.query.filter(
                 Question.answer == self.new_question['answer']
@@ -86,6 +88,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(len(data["categories"]))
 
     def test_get_questions_wrong_category_returns_404(self):
+
         res = self.client().get(
             f"/categories/{self.wrong_category_id}/questions"
         )
@@ -96,6 +99,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data["message"], 'Category not found')
 
     def test_get_paginated_questions(self):
+        """Tests with and withour query params."""
 
         res = self.client().get("/questions")
         data = json.loads(res.data)
@@ -129,6 +133,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
 
     def test_create_new_question_fail_if_wrong_category(self):
+
         question = self.new_question
         question['category'] = self.wrong_category_id
         res = self.client().post("/questions", json=question)
@@ -154,12 +159,14 @@ class TriviaTestCase(unittest.TestCase):
             self.assertEqual(deleted_question, None)
 
     def test_delete_question_fail_if_wrong_question_id(self):
+
         res_delete = self.client().delete(
             f"/questions/{self.wrong_question_id}")
 
         self.assertEqual(res_delete.status_code, 422)
 
     def test_retrieve_question_quiz_success(self):
+
         json_data = {'previous_questions': [1],
                      'quiz_category': {'id': 1}}
 
