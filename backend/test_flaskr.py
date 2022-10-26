@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 
 import unittest
 import json
-from flask_sqlalchemy import SQLAlchemy
 
 from flaskr import create_app
 from models import setup_db, Question, Category
@@ -20,8 +19,8 @@ class TriviaTestCase(unittest.TestCase):
 
         self.app = create_app()
         self.client = self.app.test_client
-        # self.database_name = "trivia_test"
         self.database_path = DATABASE_PATH_TEST
+
         setup_db(self.app, self.database_path)
 
         self.new_question = {
@@ -31,6 +30,7 @@ class TriviaTestCase(unittest.TestCase):
             'difficulty': 4
         }
         self.new_category = {'type': 'Game'}
+        self.wrong_page_number = 1000
         self.wrong_category_id = 1000
         self.wrong_question_id = 1000
         self.test_category_id = 1
@@ -38,15 +38,12 @@ class TriviaTestCase(unittest.TestCase):
             self.test_category = Category.query.filter(
                 Category.id == self.test_category_id).one_or_none()
 
-        # binds the app to the current context
-        with self.app.app_context():
-            self.db = SQLAlchemy()
-            self.db.init_app(self.app)
-            # create all tables
-            self.db.create_all()
-
     def tearDown(self):
-        """Executed after reach test"""
+        """Executed after each test
+
+        Will clear the database from new created question
+        in order to keep the same data for every test.
+        """
 
         with self.app.app_context():
             test_quetions = Question.query.filter(
@@ -99,7 +96,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data["message"], 'Category not found')
 
     def test_get_paginated_questions(self):
-        """Tests with and withour query params."""
+        """Tests with and without query params."""
 
         res = self.client().get("/questions")
         data = json.loads(res.data)
@@ -117,6 +114,17 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res_page_2.status_code, 200)
         self.assertEqual(data_page_2["success"], True)
         self.assertEqual(data_page_2['current_page'], 2)
+
+    def test_404_request_non_valid_page(self):
+        """Tests question pagination failure 404"""
+
+        res = self.client().get(
+            f'/questions?page={self.wrong_page_number}')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'Questions not found')
 
     def test_create_new_question(self):
 
@@ -186,6 +194,29 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'bad request')
+
+    def test_search_questions_success(self):
+        """Tests search questions success"""
+
+        res = self.client().post(
+            '/questions', json={'searchTerm': 'Caged Bird'})
+        data = json.loads(res.data)
+        questions = data['questions']
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(len(questions), 1)
+        self.assertEqual(questions[0]['id'], 5)
+
+    def test_search_questions_return_nothing_not_match(self):
+        """Tests search questions doesn't return question if not match."""
+
+        response = self.client().post('/questions',
+                                      json={'searchTerm': 'JHON SMITH'})
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(len(data['questions']))
 
 
 # Make the tests conveniently executable
