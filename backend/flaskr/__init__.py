@@ -203,7 +203,7 @@ def create_app(test_config=None):
         previous_questions_id = body.get("previous_questions", [])
         quiz_category = body.get("quiz_category", {})
 
-        if not previous_questions_id and not quiz_category:
+        if not quiz_category:
             abort(400)
 
         try:
@@ -228,8 +228,8 @@ def create_app(test_config=None):
         try:
             next_question = random.choice(not_seen_questions)
             next_question_formatted = next_question.format()
-        except IndexError:
-            abort(404, 'No more questions')
+        except IndexError:  # No More questions
+            return jsonify({'success': True})
 
         return jsonify({'question': next_question_formatted})
 
