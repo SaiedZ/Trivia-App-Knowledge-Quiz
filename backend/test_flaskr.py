@@ -69,9 +69,8 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_get_questions_by_category(self):
 
-        res = self.client().get(
-            f"/categories/{self.test_category_id}/questions"
-        )
+        url = f"/categories/{self.test_category_id}/questions"
+        res = self.client().get(url)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -86,9 +85,8 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_get_questions_wrong_category_returns_404(self):
 
-        res = self.client().get(
-            f"/categories/{self.wrong_category_id}/questions"
-        )
+        url = f"/categories/{self.wrong_category_id}/questions"
+        res = self.client().get(url)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
@@ -168,8 +166,8 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_delete_question_fail_if_wrong_question_id(self):
 
-        res_delete = self.client().delete(
-            f"/questions/{self.wrong_question_id}")
+        url = f"/questions/{self.wrong_question_id}"
+        res_delete = self.client().delete(url)
 
         self.assertEqual(res_delete.status_code, 422)
 
@@ -184,7 +182,7 @@ class TriviaTestCase(unittest.TestCase):
         category = data['question']['category']
 
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(category, json_data['quiz_category']['id'])
+        self.assertEqual(json_data['quiz_category']['id'], category)
 
     def test_retrieve_question_quiz_fails(self):
 
@@ -199,7 +197,9 @@ class TriviaTestCase(unittest.TestCase):
         """Tests search questions success"""
 
         res = self.client().post(
-            '/questions', json={'searchTerm': 'Caged Bird'})
+            '/questions',
+            json={'searchTerm': 'Caged Bird'}
+        )
         data = json.loads(res.data)
         questions = data['questions']
 
@@ -211,8 +211,10 @@ class TriviaTestCase(unittest.TestCase):
     def test_search_questions_return_nothing_not_match(self):
         """Tests search questions doesn't return question if not match."""
 
-        response = self.client().post('/questions',
-                                      json={'searchTerm': 'JHON SMITH'})
+        response = self.client().post(
+            '/questions',
+            json={'searchTerm': 'JHON SMITH'}
+        )
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 200)
